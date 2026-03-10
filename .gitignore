@@ -1,0 +1,82 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+build-log.txt
+build_debug.txt
+build_error.log
+build_error.txt
+build_error_final.txt
+build_log_2.txt
+build_log_3.txt
+build_log_update.txt
+tsc_errors.txt
+errors.log
+electron_errors.log
+tsc_check.txt
+tsc_output.txt
+
+# Dependencies
+node_modules
+dist
+dist-electron
+dist-ssr
+
+# Environment
+*.local
+.env
+.env.*
+env.ps1
+!.env.example
+!server/.env.example
+
+# Editor & OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.agent/
+
+# Credentials & Deploy
+ftp-upload.txt
+upload.txt
+DEPLOY_CREDENCIAIS.md
+*.credentials
+*.auth
+hash_live.txt
+hash_local.txt
+upload*.ps1
+deploy*.ps1
+backup*.ps1
+
+# Temporary & Reports
+temp_*
+tmp_*
+backups/
+relatorios_verificacao/
+market_research/
+instrucoes_serpapi/
+visual-assets-showcase/
+vitrinex-architecture-export/
+analise-codigo.txt
+preview_export.html
+tree_75.txt
+funcoes_inativas.md
+relatorio_auditoria.md
+
+# SQL & Data
+*.sql
+*.sqlite
+
+# Tests
+test_*.js
+test_*.ts
+test_*.tsx
