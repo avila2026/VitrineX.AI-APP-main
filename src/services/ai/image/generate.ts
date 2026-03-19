@@ -3,6 +3,7 @@ import { getGeminiClient } from '../gemini';
 import { proxyFetch } from '../../core/api';
 import { ImageOptions, ImageResult } from './types';
 import { isClientSideFallbackAllowed, validateModelCapability, ImageModuleError } from './utils';
+import { logger } from '../../../lib/logger';
 
 export const generateImageInternal = async (prompt: string, options?: ImageOptions): Promise<ImageResult> => {
     const modelId = options?.model || GEMINI_IMAGE_MODEL;
@@ -35,7 +36,7 @@ export const generateImageInternal = async (prompt: string, options?: ImageOptio
             };
         }
     } catch (error) {
-        console.warn("Backend proxy failed for generateImage, checking fallback policy.", error);
+        logger.warn("Backend proxy failed for generateImage, checking fallback policy.", { error });
     }
 
     // 3. Fallback to Client-Side (Dev Only)
@@ -89,12 +90,12 @@ export const generateImageInternal = async (prompt: string, options?: ImageOptio
                     base64: base64
                 };
             }
-            console.warn("SDK returned no images, proceeding to fallback.");
+            logger.warn("SDK returned no images, proceeding to fallback.");
         } catch (innerError: any) {
-            console.warn("Image generation SDK fallback failed, proceeding to Pollinations:", innerError);
+            logger.warn("Image generation SDK fallback failed, proceeding to Pollinations:", { error: innerError });
         }
     } else {
-        console.warn("Client-side SDK disabled, skipping to Pollinations fallback.");
+        logger.warn("Client-side SDK disabled, skipping to Pollinations fallback.");
     }
 
     // 4. Fallback to Pollinations.ai (Free/No-Key/Production Safe)
@@ -103,7 +104,7 @@ export const generateImageInternal = async (prompt: string, options?: ImageOptio
         // Add seed to ensure consistency if needed, or random param
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&nologo=true`;
 
-        console.log("Attempting Pollinations fallback:", pollinationsUrl);
+        logger.info("Attempting Pollinations fallback:", { pollinationsUrl });
         const fallbackResponse = await fetch(pollinationsUrl);
         if (!fallbackResponse.ok) {
             throw new Error(`Pollinations API failed with status ${fallbackResponse.status}`);
@@ -131,7 +132,7 @@ export const generateImageInternal = async (prompt: string, options?: ImageOptio
             base64: base64
         };
     } catch (fallbackError: any) {
-        console.error("All image generation methods failed.", fallbackError);
+        logger.error("All image generation methods failed.", { error: fallbackError });
         return {
             type: 'error',
             code: 'GENERATION_FAILED',

@@ -8,7 +8,8 @@ Onde o **Design Líquido** encontra a **Inteligência Artificial Generativa**.
 
 ![Version](https://img.shields.io/badge/v3.0-LIVE-0ea5e9?style=for-the-badge)
 ![Status](https://img.shields.io/badge/SYSTEM-OPERATIONAL-22c55e?style=for-the-badge)
-![AI Core](https://img.shields.io/badge/CORE-GEMINI_2.0_FLASH-orange?style=for-the-badge)
+![AI Core](https://img.shields.io/badge/CORE-MULTI_AI_ENGINE-purple?style=for-the-badge)
+![Models](https://img.shields.io/badge/MODELS-GEMINI_|_MISTRAL_|_OLLAMA-blue?style=for-the-badge)
 
 <br />
 
@@ -35,8 +36,11 @@ Tudo isso envelopado em uma interface **Liquid Glass** que redefine o que um sof
 
 A maioria das ferramentas são estáticas. O VitrineX é **vivo**.
 
-### 🧠 **Cérebro Ativo (Gemini 2.0)**
-Ele não apenas "escreve". Ele entende **nuances culturais**, ironia, gatilhos mentais e psicologia de vendas.
+### 📡 **Multi-Model Engine (LLM Router)**
+O VitrineX não está preso a um único modelo. Ele escolhe a melhor ferramenta para o trabalho:
+- **Google Gemini 2.0:** Otimizado para raciocínio complexo e multimídia.
+- **Mistral AI:** Perfeito para copywriting criativo e rápido.
+- **Ollama (Local):** Privacidade total e custo zero rodando na sua própria máquina.
 
 ### 👁️ **Radar de Mercado (Market Intelligence)**
 Enquanto seus concorrentes chutam o que postar, o módulo **Market Radar** escaneia dados reais para dizer *exatamente* o que sua audiência quer consumir agora.
@@ -58,6 +62,7 @@ Esqueça formulários chatos. Nossa interface **responde, brilha e flui**.
 | **🎨 Flash Designer** | Geração de UI Components via Prompt | ⚠️ Beta |
 | **🚀 Campaign Builder** | Estratégias 360º com cálculo de ROI automático | ✅ Ativo |
 | **📍 AdStudio** | Criativos publicitários focados em conversão | ✅ Ativo |
+| **⚙️ AI Hub** | Gestão de APIs (Gemini, Mistral, Ollama) | ✅ Ativo |
 
 ---
 
@@ -69,7 +74,7 @@ Para os Curiosos e Engenheiros:
 *   **Build**: Vite (Lightning Fast HMR)
 *   **Styling**: TailwindCSS + Custom CSS Variables (Design Tokens)
 *   **Motion**: Framer Motion (Physics-based animations)
-*   **AI Bridge**: Google GenAI SDK (Gemini 2.0 + Imagen 3)
+*   **AI Bridge**: Gemini 2.0, Mistral AI, Ollama (Local LLM Support)
 *   **Desktop**: Electron (Native Experience)
 
 ---

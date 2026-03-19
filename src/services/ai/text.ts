@@ -9,6 +9,8 @@ import {
     Campaign
 } from '../../types';
 import { getGeminiClient } from './gemini';
+import { logger } from '../../lib/logger';
+
 
 export interface GenerateTextOptions {
     model?: string;
@@ -127,7 +129,7 @@ export const generateText = async (prompt: string, options?: GenerateTextOptions
                                 }
                             });
                         } catch (toolError) {
-                            console.error(`Falha ao executar ferramenta ${call.name}:`, toolError);
+                            logger.error(`Falha ao executar ferramenta ${call.name}:`, { error: toolError });
                             toolResponses.push({
                                 functionResponse: {
                                     name: call.name,
@@ -164,7 +166,7 @@ export const generateText = async (prompt: string, options?: GenerateTextOptions
 
     } catch (error) {
         const err = error as Error & { message?: string };
-        console.error("SDK generation failed:", err);
+        logger.error("SDK generation failed:", { error: err.message });
         if (err.message?.includes('429')) {
             throw new Error("Limite de requisições atingido. Por favor, aguarde ou faça o upgrade da licença.");
         }
@@ -183,7 +185,7 @@ export const translateText = async (text: string, targetLanguage: string, source
         });
         return translatedText.trim();
     } catch (error) {
-        console.error("Translation failed:", error);
+        logger.error("Translation failed:", { error: error });
         // Fallback to original text if translation fails
         return text;
     }
@@ -198,7 +200,7 @@ export const countTokens = async (text: string, modelId: string = GEMINI_FLASH_M
         });
         return result.totalTokens || 0;
     } catch (error) {
-        console.warn("Falha ao contar tokens:", error);
+        logger.warn("Falha ao contar tokens:", { error: error });
         return 0;
     }
 };
@@ -245,7 +247,20 @@ export const sendMessageToChat = async (
             };
         });
 
-        const promptText = typeof message === 'string' ? message : message.map(p => typeof p === 'string' ? p : p.text).join(' ');
+        let promptText = typeof message === 'string' ? message : message.map(p => typeof p === 'string' ? p : p.text).join(' ');
+
+        // OPTIONAL: Pull context from Vector Memory if enabled
+        let systemInstruction = getSystemInstruction(options.systemInstruction, !!(options.tools || options.useKnowledgeBase));
+        
+        if (options.useKnowledgeBase) {
+            const { queryVectorMemory } = await import('./vectorMemory');
+            const relevantMemories = await queryVectorMemory(promptText, 3);
+            if (relevantMemories.length > 0) {
+                const contextSnippet = relevantMemories.map(m => `- ${m.text}`).join('\n');
+                systemInstruction = `${systemInstruction || ''}\n\nRELEVANT CONTEXT FROM MEMORY:\n${contextSnippet}`;
+                logger.debug("Injected vector context into chat", { count: relevantMemories.length });
+            }
+        }
 
         // Construct full contents: history + new user message
         const fullContents: ModelContent[] = [
@@ -258,7 +273,7 @@ export const sendMessageToChat = async (
             contents: fullContents as any[],
             config: {
                 temperature: 1.0,
-                systemInstruction: getSystemInstruction(options.systemInstruction, !!(options.tools || options.useKnowledgeBase)),
+                systemInstruction,
                 tools: options.tools
             }
         });
@@ -279,7 +294,7 @@ export const sendMessageToChat = async (
         return fullText;
 
     } catch (error) {
-        console.error("Chat request failed", error);
+        logger.error("Chat request failed", { error: error });
         throw error;
     }
 };
@@ -300,7 +315,7 @@ export const aiManagerStrategy = async (prompt: string, userId: string): Promise
             return { strategyText: response.replace(jsonMatch[0], '').trim(), suggestions };
         }
     } catch (e) {
-        console.warn("Falha ao extrair sugestões da estratégia", e);
+        logger.warn("Falha ao extrair sugestões da estratégia", { error: e });
     }
 
     return { strategyText: response, suggestions: ["Otimizar SEO", "Campanha de Retargeting"] };
@@ -332,7 +347,7 @@ export const searchTrends = async (query: string, language: string = 'en-US', us
             userId: userId
         }];
     } catch (error) {
-        console.error("searchTrends failed", error);
+        logger.error("searchTrends failed", { error: error });
         return [];
     }
 };
@@ -378,7 +393,7 @@ export const campaignBuilder = async (campaignPrompt: string, userId: string = '
         const cleanedJson = planJsonStr.replace(/```json\n?|\n?```/g, '').trim();
         plan = JSON.parse(cleanedJson);
     } catch (e) {
-        console.error("Erro ao fazer parse da campanha:", e);
+        logger.error("Erro ao fazer parse da campanha:", { error: e });
         plan = {
             name: "Erro na Geração",
             description: "Não foi possível gerar a estratégia detalhada. Tente novamente com mais detalhes.",

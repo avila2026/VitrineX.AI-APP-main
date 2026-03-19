@@ -157,6 +157,24 @@ logger.error('Falha ao salvar', { error: error.message });
 
 ---
 
+### ✅ 5. Motor de IA Multi-Modelo (v5.0)
+
+**Antes:** Acoplado exclusivamente ao Google Gemini.
+**Agora:** Engine agnóstico com suporte a múltiplos provedores e roteamento dinâmico.
+
+**Arquivos Criados/Modificados:**
+- `src/services/ai/mistral.ts` - Integração nativa com Mistral AI.
+- `src/services/ai/ollama.ts` - Integração com LLMs locais via Ollama.
+- `src/services/ai/llmRouter.ts` - Roteador inteligente que decide qual modelo usar.
+- `src/pages/settings/ApiSettingsSection.tsx` - Interface para gerenciamento de chaves e conexão.
+
+**Novas Funcionalidades:**
+- **Roteamento por Feature:** Você pode definir o Gemini para "Trends" e o Mistral para "Posts".
+- **Fallback Automático:** Se o provedor principal falhar, o sistema busca o próximo disponível.
+- **Privacidade Local:** Suporte a Ollama para quem prefere não enviar dados para a nuvem.
+
+---
+
 ## 📊 Próximos Passos
 
 ### Imediato (Esta Semana)

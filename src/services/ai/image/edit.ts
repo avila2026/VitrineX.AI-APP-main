@@ -3,6 +3,7 @@ import { getGeminiClient } from '../gemini';
 import { proxyFetch } from '../../core/api';
 import { ImageOptions, ImageResult } from './types';
 import { isClientSideFallbackAllowed, validateModelCapability } from './utils';
+import { logger } from '../../../lib/logger';
 
 export const editImageInternal = async (
     prompt: string,
@@ -49,7 +50,7 @@ export const editImageInternal = async (
             return { type: 'text', text: textResponse };
         }
     } catch (error) {
-        console.warn("Backend proxy failed for editImage, checking fallback policy.", error);
+        logger.warn("Backend proxy failed for editImage, checking fallback policy.", { error });
     }
 
     // 3. Fallback to Client-Side (Dev Only)
@@ -100,7 +101,7 @@ export const editImageInternal = async (
         const responseText = result.text || (result as any).candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (responseText) {
-            console.log("Edit returned text, attempting to generate image from analysis/instruction.");
+            logger.info("Edit returned text, attempting to generate image from analysis/instruction.");
             const { generateImageInternal } = await import('./generate');
             const enrichedPrompt = `Instruction: ${prompt}\n\nExisting Image Context: ${responseText}\n\nTask: Create a NEW image that follows the instruction precisely based on the existing context. Use high quality, professional studio lighting.`;
             return await generateImageInternal(enrichedPrompt, options);
@@ -108,7 +109,7 @@ export const editImageInternal = async (
 
         return { type: 'error', code: 'GENERATION_FAILED', message: 'Nenhuma edição retornada pelo SDK. Verifique se o modelo suporta saída de imagem.' };
     } catch (innerError: any) {
-        console.warn("Edit image SDK logic failed (primary model), attempting fallback to Analyze+Generate pipeline:", innerError);
+        logger.warn("Edit image SDK logic failed (primary model), attempting fallback to Analyze+Generate pipeline:", { error: innerError });
 
         // --- ERROR FALLBACK STRATEGY: Analyze + Generate ---
         try {
@@ -137,7 +138,7 @@ export const editImageInternal = async (
                 return await generateImageInternal(enrichedPrompt, options);
             }
         } catch (fallbackError) {
-            console.error("Fallback Analyze+Generate also failed:", fallbackError);
+            logger.error("Fallback Analyze+Generate also failed:", { error: fallbackError });
         }
 
         return {

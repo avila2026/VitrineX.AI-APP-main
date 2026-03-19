@@ -39,17 +39,21 @@ Como você está usando um usuário FTP específico, é provável que você já 
     *   *Limpeza:* Se houver arquivos padrão da Hostinger, pode deletá-los para não confundir com o seu site.
 2.  No painel **Esquerdo** (Seu Computador), navegue até a pasta do projeto:
     `c:\Users\Jeanc\OneDrive\Área de Trabalho\VitrineX-AI - APP\`
-3.  Entre na pasta `dist`.
-    *   **MUITO IMPORTANTE:** Entre na pasta `dist`. Você precisa ver `index.html`, `assets`, etc.
-4.  Selecione **TUDO** que está dentro de `dist`.
-5.  Arraste para o painel Direito.
-6.  Aguarde o upload.
+3.  **Pasta `dist` (FRONTEND):** Entre na pasta `dist`. Selecione **TUDO** que está dentro de `dist` e arraste para a raiz do servidor (`/public_html`).
+4.  **Pasta `api` (BACKEND HOSTINGER):**
+    *   Crie uma pasta chamada `api` dentro de `public_html` no servidor.
+    *   No computador, navegue até `server/hostinger_api/`.
+    *   Envie os arquivos `config.php`, `salvar_memoria.php` e `migrate_supabase_to_mysql.php` para essa nova pasta `api`.
+5.  **Configuração de Banco de Dados:**
+    *   Importe o arquivo `SCHEMA_MYSQL.sql` no seu **phpMyAdmin** na Hostinger.
+    *   Edite o `api/config.php` no servidor com os dados do banco MySQL criados no painel Hostinger.
 
 ### 4. Verificar .htaccess
 
-1.  Certifique-se de que o arquivo `.htaccess` foi enviado. Ele é crucial.
+1.  Certifique-se de que o arquivo `.htaccess` foi enviado. Ele é crucial para o roteamento do React.
 
 ### 5. Testar
 
-1.  Acesse `http://red-owl-902155.hostingersite.com` (ou seu domínio final se já estiver apontado).
+1.  Acesse `http://red-owl-902155.hostingersite.com`.
 2.  Verifique se o site carrega.
+3.  Teste a memória da IA (ela tentará salvar via `api/salvar_memoria.php`).

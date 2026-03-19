@@ -10,7 +10,8 @@ import {
     LanguageIcon,
     SparklesIcon,
     SunIcon,
-    CloudIcon
+    CloudIcon,
+    CpuChipIcon
 } from '@heroicons/react/24/outline';
 import ProfileSection from './settings/ProfileSection';
 import SubscriptionSection from './settings/SubscriptionSection';
@@ -18,6 +19,7 @@ import IntegrationsSection from './settings/IntegrationsSection';
 import SecuritySection from './settings/SecuritySection';
 import NotificationsSection from './settings/NotificationsSection';
 import PreferencesSection from './settings/PreferencesSection';
+import ApiSettingsSection from './settings/ApiSettingsSection';
 
 const Settings: React.FC = () => {
     const { user, profile, signOut } = useAuth();
@@ -120,6 +122,13 @@ const Settings: React.FC = () => {
                                 <CloudIcon className="w-5 h-5" />
                                 Canais Digitais
                             </button>
+                            <button
+                                onClick={() => scrollToSection('api-settings-section')}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-[var(--text-secondary)] hover:bg-[var(--background-input)] hover:text-[var(--text-primary)] transition-colors"
+                            >
+                                <CpuChipIcon className="w-5 h-5" />
+                                Conexões de IA
+                            </button>
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-border">
@@ -142,6 +151,7 @@ const Settings: React.FC = () => {
                     <NotificationsSection />
                     <PreferencesSection />
                     <IntegrationsSection />
+                    <ApiSettingsSection />
                 </div>
             </div>
         </div>

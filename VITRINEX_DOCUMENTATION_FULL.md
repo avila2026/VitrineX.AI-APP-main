@@ -37,10 +37,16 @@ Este documento serve como a "Memória Central" para agentes de IA, desenvolvedor
 - **Pagamentos:** Stripe (Checkout e Webhooks).
 
 ### Integrações de IA
-- **Tess AI (Pareto):**
-  - **Agente Admin (37390):** Gerenciamento e insights técnicos.
-  - **Agente Chat VitrineX (37393):** Assistente geral para o usuário final.
-  - **Modelos:** Gemini (Google), GPT-4o (OpenAI) via Tess.
+- **LLM Multi-Engine Router:** Sistema inteligente que distribui tarefas entre modelos baseados na configuração do usuário.
+- **Provider: Google Gemini:**
+  - **Modelos:** Gemini 2.0 Flash, Gemini 1.5 Pro, Thinking Model.
+  - **Uso:** Raciocínio complexo, Multimodal, Pesquisa Google.
+- **Provider: Mistral AI:**
+  - **Modelos:** Mistral Small, Medium, Large.
+  - **Uso:** Alternativa de alto desempenho para geração de texto.
+- **Provider: Ollama (Local):**
+  - **Modelos:** Mistral, Llama 3, custom models.
+  - **Uso:** Privacidade total, custo zero, processamento local.
 
 ---
 
@@ -132,17 +138,10 @@ O coração criativo da plataforma.
 
 ## 6. Configurações de IA
 
-### Tess AI (Pareto)
-- **Endpoint:** `https://tess.pareto.io/api/agents/{agentId}/execute`
-- **Autenticação:** Bearer Token via Header `Authorization`.
-- **Payload Padrão:**
-  ```json
-  {
-    "messages": [{ "role": "user", "content": "..." }],
-    "stream": false,
-    "wait_execution": true
-  }
-  ```
+### LLM Router Logic
+- **Serviço:** `src/services/ai/llmRouter.ts`
+- **Fallback:** Se um provedor (Mistral/Ollama) falhar ou não estiver configurado, o sistema faz fallback automático para o Gemini se a chave API estiver ativa.
+- **Configuração:** Armazenada no `localStorage` sob as chaves `vitrinex_llm_mappings` e chaves específicas de API.
 
 ### Google Integrations (Backend)
 - Serviço configurado em `server/services/agent_service.ts`.

@@ -50,6 +50,7 @@ import AnimatedBackground from './components/ui/animated-shader-background';
 import OnboardingOverlay from './components/features/OnboardingOverlay';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import GlobalFilters from './components/ui/GlobalFilters'; // Optimization
+import OllamaDOMInspector from './components/features/OllamaDOMInspector';
 
 // Module Type Definition
 export const MODULE_NAMES = [
@@ -292,6 +293,7 @@ const AppContent: React.FC = () => {
 
                     {/* Toast & Overlays */}
                     <OnboardingOverlay />
+                    <OllamaDOMInspector />
 
                 </div>
             )}

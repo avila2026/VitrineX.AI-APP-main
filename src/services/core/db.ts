@@ -1,14 +1,13 @@
 import { UserProfile, Post, Ad, Campaign, Trend, LibraryItem, ScheduleEntry, TargetAudience } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { logger } from '../../lib/logger';
 
 // Real Supabase Database Service
 // Replaces the previous Mock Database Service.
 
 // --- Helper for Errors ---
 const handleError = (context: string, error: any) => {
-    console.error(`Error in ${context}:`, error);
-    // Podemos relançar ou retornar null dependendo da estratégia.
-    // Aqui vamos relançar para que a UI possa mostrar o Toast de erro.
+    logger.error(`Error in ${context}:`, { error });
     throw new Error(error.message || `Falha em ${context}`);
 };
 
@@ -49,7 +48,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
         }
         return data as UserProfile;
     } catch (error) {
-        console.warn('getUserProfile failed (likely offline/no-config). Returning null.', error);
+        logger.warn('getUserProfile failed (likely offline/no-config). Returning null.', { error });
         return null; // Fail gracefully
     }
 };
@@ -71,10 +70,7 @@ export const updateUserProfile = async (userId: string, profile: Partial<UserPro
 
         if (error) throw error;
     } catch (error) {
-        console.warn('updateUserProfile failed, persisting locally if possible', error);
-        // Fallback for real users who are offline? 
-        // We can't easily merge partial profile updates offline without complex sync.
-        // For now, just suppress the error or let it slide.
+        logger.warn('updateUserProfile failed, persisting locally if possible', { error });
     }
 };
 
@@ -91,7 +87,7 @@ export const savePost = async (post: Post): Promise<Post> => {
         if (error) throw error;
         return data as Post;
     } catch (error) {
-        console.warn('Supabase savePost failed, fallback to local', error);
+        logger.warn('Supabase savePost failed, fallback to local', { error });
         return saveLocalData('posts', post);
     }
 };
@@ -107,7 +103,7 @@ export const getPosts = async (userId: string): Promise<Post[]> => {
 
         if (!error && data) supabaseItems = data as Post[];
     } catch (error) {
-        console.warn('getPosts failed', error);
+        logger.warn('getPosts failed', { error });
     }
 
     // Merge Local Only if needed or as primary if offline
@@ -135,7 +131,7 @@ export const saveAd = async (ad: Ad): Promise<Ad> => {
         if (error) throw error;
         return data as Ad;
     } catch (error) {
-        console.warn('saveAd failed, fallback to local', error);
+        logger.warn('saveAd failed, fallback to local', { error });
         return saveLocalData('ads', ad);
     }
 };
@@ -151,7 +147,7 @@ export const getAds = async (userId: string): Promise<Ad[]> => {
 
         if (!error && data) supabaseItems = data as Ad[];
     } catch (error) {
-        console.warn('getAds failed', error);
+        logger.warn('getAds failed', { error });
     }
 
     const localItems = getLocalData<Ad>('ads').filter(i => i.userId === userId);
@@ -174,7 +170,7 @@ export const saveCampaign = async (campaign: Campaign): Promise<Campaign> => {
         if (error) throw error;
         return data as Campaign;
     } catch (error) {
-        console.warn('saveCampaign failed, fallback to local', error);
+        logger.warn('saveCampaign failed, fallback to local', { error });
         return saveLocalData('campaigns', campaign);
     }
 };
@@ -190,7 +186,7 @@ export const getCampaigns = async (userId: string): Promise<Campaign[]> => {
 
         if (!error && data) supabaseItems = data as Campaign[];
     } catch (error) {
-        console.warn('getCampaigns failed', error);
+        logger.warn('getCampaigns failed', { error });
     }
 
     const localItems = getLocalData<Campaign>('campaigns').filter(i => i.userId === userId);
@@ -212,7 +208,7 @@ export const saveTrend = async (trend: Trend): Promise<Trend> => {
         if (error) throw error;
         return data as Trend;
     } catch (e) {
-        console.warn('saveTrend failed, fallback to local', e);
+        logger.warn('saveTrend failed, fallback to local', { error: e });
         return saveLocalData('trends', trend);
     }
 
@@ -229,7 +225,7 @@ export const getTrends = async (userId: string): Promise<Trend[]> => {
 
         if (!error && data) supabaseItems = data as Trend[];
     } catch (error) {
-        console.warn('getTrends failed', error);
+        logger.warn('getTrends failed', { error });
     }
 
     const localItems = getLocalData<Trend>('trends').filter(i => i.userId === userId);
@@ -292,7 +288,7 @@ const getLocalData = <T>(key: string): T[] => {
         const item = localStorage.getItem(`vitrinex_${key}`);
         return item ? JSON.parse(item) : [];
     } catch (e) {
-        console.warn(`Failed to parse local data for ${key}`, e);
+        logger.warn(`Failed to parse local data for ${key}`, { error: e });
         return [];
     }
 };
@@ -309,7 +305,7 @@ const saveLocalData = <T extends { id: string }>(key: string, data: T): T => {
         localStorage.setItem(`vitrinex_${key}`, JSON.stringify(current));
         return data;
     } catch (e) {
-        console.error(`Failed to save local data for ${key}`, e);
+        logger.error(`Failed to save local data for ${key}`, { error: e });
         throw e;
     }
 };
@@ -328,7 +324,7 @@ export const saveLibraryItem = async (item: LibraryItem): Promise<LibraryItem> =
         if (error) throw error;
         return data as LibraryItem;
     } catch (error) {
-        console.warn('Supabase save failed, falling back to LocalStorage:', error);
+        logger.warn('Supabase save failed, falling back to LocalStorage:', { error });
         // Fallback to LocalStorage
         return saveLocalData('library_items', item);
     }
@@ -360,7 +356,7 @@ export const getLibraryItems = async (userId: string, tags?: string[]): Promise<
             supabaseItems = data as LibraryItem[];
         }
     } catch (e) {
-        console.warn('Supabase fetch failed:', e);
+        logger.warn('Supabase fetch failed:', { error: e });
     }
 
     // Fetch from LocalStorage
@@ -373,7 +369,7 @@ export const getLibraryItems = async (userId: string, tags?: string[]): Promise<
             localItems = localItems.filter(i => tags.some(t => i.tags.includes(t)));
         }
     } catch (e) {
-        console.warn('Local fetch failed:', e);
+        logger.warn('Local fetch failed:', { error: e });
     }
 
     // Merge logic: Local items take precedence if IDs conflict (optimistic updates), 
@@ -394,7 +390,7 @@ export const deleteLibraryItem = async (itemId: string): Promise<void> => {
     try {
         await supabase.from('library_items').delete().eq('id', itemId);
     } catch (e) {
-        console.warn('Supabase delete failed for library item. It might have been already deleted or network failed.', e);
+        logger.warn('Supabase delete failed for library item. It might have been already deleted or network failed.', { error: e });
     }
 
     try {
@@ -402,7 +398,7 @@ export const deleteLibraryItem = async (itemId: string): Promise<void> => {
         const filtered = current.filter(i => i.id !== itemId);
         localStorage.setItem('vitrinex_library_items', JSON.stringify(filtered));
     } catch (e) {
-        console.error('Local delete failed', e);
+        logger.error('Local delete failed', { error: e });
     }
 };
 
@@ -421,7 +417,7 @@ export const deleteAllLibraryItems = async (userId: string, type?: string, tag?:
         const { error } = await query;
         if (error) throw error;
     } catch (e) {
-        console.warn('Supabase bulk delete failed', e);
+        logger.warn('Supabase bulk delete failed', { error: e });
     }
 
     // 2. Delete from LocalStorage
@@ -441,7 +437,7 @@ export const deleteAllLibraryItems = async (userId: string, type?: string, tag?:
         });
         localStorage.setItem('vitrinex_library_items', JSON.stringify(filtered));
     } catch (e) {
-        console.error('Local bulk delete failed', e);
+        logger.error('Local bulk delete failed', { error: e });
     }
 };
 
@@ -486,7 +482,7 @@ export const deleteScheduleEntry = async (entryId: string): Promise<void> => {
     try {
         await supabase.from('schedule').delete().eq('id', entryId);
     } catch (e) {
-        console.warn('Supabase delete failed for schedule entry. It might have been already deleted or network failed.', e);
+        logger.warn('Supabase delete failed for schedule entry. It might have been already deleted or network failed.', { error: e });
     }
 
     try {
@@ -494,6 +490,6 @@ export const deleteScheduleEntry = async (entryId: string): Promise<void> => {
         const filtered = current.filter(i => i.id !== entryId);
         localStorage.setItem('vitrinex_schedule', JSON.stringify(filtered));
     } catch (e) {
-        console.error('Local delete failed for schedule entry', e);
+        logger.error('Local delete failed for schedule entry', { error: e });
     }
 };

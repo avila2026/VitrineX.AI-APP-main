@@ -15,7 +15,6 @@ import { publishFacebookPost, createInstagramMedia, publishInstagramMedia, share
 import { generatePinterestRSS } from '../services/features/pinterestRss';
 import { socialAuthService } from '../services/social/SocialAuthService';
 import { uploadFileToDrive, isDriveConnected } from '../services/integrations/googleDrive';
-import { generateText, generateImage } from '../services/ai';
 import { saveLibraryItem } from '../services/core/db';
 import { Post, LibraryItem } from '../types';
 import { GEMINI_FLASH_MODEL, GEMINI_IMAGE_MODEL, PLACEHOLDER_IMAGE_BASE64, GEMINI_PRO_MODEL, IMAGEN_ULTRA_MODEL, SYSTEM_INSTRUCTION_ENHANCE_PROMPT } from '../constants';
@@ -33,6 +32,11 @@ import GeneratedPostCard from '../components/features/GeneratedPostCard';
 import { translateError } from '../lib/errorTranslator';
 import { FlashDesigner } from '../components/features/FlashUI/FlashUIComponent';
 import { BoltIcon, SparklesIcon as SparklesIconSolid } from '@heroicons/react/24/solid';
+
+import { routedGenerateText, generateImage } from '../services/ai';
+import { logger } from '../lib/logger';
+import { useContentSave } from '../hooks/useContentSave';
+import { StrongContent, Platform, ContentFormat, ContentStatus } from '../types/content.types';
 
 
 // Avatar Interface
@@ -92,6 +96,7 @@ const ContentGenerator: React.FC = () => {
   const [pinterestLoading, setPinterestLoading] = useState(false);
 
   const { addToast } = useToast();
+  const { saveContent } = useContentSave();
   const userId = user?.id || 'guest-user';
 
   React.useEffect(() => {
@@ -113,7 +118,7 @@ const ContentGenerator: React.FC = () => {
         }
         localStorage.removeItem('vitrinex_pending_context');
       } catch (e) {
-        console.error('Error parsing pending context', e);
+        logger.error('Error parsing pending context', { error: e });
       }
     }
   }, [addToast]);
@@ -177,11 +182,11 @@ const ContentGenerator: React.FC = () => {
         }`;
 
         try {
-          const strategyResponse = await generateText(strategyPrompt, { model: GEMINI_FLASH_MODEL, responseMimeType: 'application/json' });
+          const strategyResponse = await routedGenerateText('content_generator', strategyPrompt, { model: GEMINI_FLASH_MODEL, responseMimeType: 'application/json' });
           strategyContext = `\n\nDIRETRIZES ESTRATÉGICAS DEFINIDAS (SIGA ESTRITAMENTE):\n${strategyResponse}`;
           addToast({ type: 'success', title: 'Estratégia Definida', message: 'Criando posts com base no plano estratégico...' });
         } catch (e) {
-          console.warn("Falha na etapa de estratégia, seguindo geração padrão.");
+          logger.warn("Falha na etapa de estratégia, seguindo geração padrão.", { error: e });
         }
       }
 
@@ -203,7 +208,10 @@ const ContentGenerator: React.FC = () => {
       5. NÃO adicione texto antes ou depois do JSON.
       `;
 
-      const textResponse = await generateText(systemPrompt, { model: GEMINI_FLASH_MODEL, responseMimeType: 'application/json' });
+      const textResponse = await routedGenerateText('content_generator', systemPrompt, { 
+        model: GEMINI_FLASH_MODEL, 
+        responseMimeType: 'application/json' 
+      });
 
       let postsData: any[] = [];
       try {
@@ -214,7 +222,7 @@ const ContentGenerator: React.FC = () => {
           postsData = [postsData];
         }
       } catch (jsonError) {
-        console.warn("Failed to parse JSON, trying fallback.", jsonError);
+        logger.warn("Failed to parse JSON, trying fallback.", { error: jsonError });
         // Fallback robusto se a IA falhar no JSON
         postsData = [{
           title: "Novo Post",
@@ -239,7 +247,7 @@ const ContentGenerator: React.FC = () => {
       addToast({ type: 'success', title: 'Conteúdo Gerado', message: isSeries ? 'Série gerada com sucesso!' : 'Post gerado com sucesso!' });
 
     } catch (err) {
-      console.error('Error generating content:', err);
+      logger.error('Error generating content:', { error: err });
       addToast({ type: 'error', title: 'Erro na Geração', message: translateError(err) });
     } finally {
       setIsGenerating(false);
@@ -265,7 +273,7 @@ const ContentGenerator: React.FC = () => {
       Input Concept: "${post.image_prompt}"
       Context (Background Story): "${post.content_text.substring(0, 150)}..."`;
 
-      const refined = await generateText(refinePrompt, { model: GEMINI_FLASH_MODEL });
+      const refined = await routedGenerateText('content_generator', refinePrompt, { model: GEMINI_FLASH_MODEL });
 
       // Update local state
       const updatedPosts = [...generatedPosts];
@@ -311,7 +319,7 @@ const ContentGenerator: React.FC = () => {
       addToast({ type: 'success', message: 'Imagem gerada com sucesso!' });
 
     } catch (e) {
-      console.error(e);
+      logger.error('handleGenerateImageFinal failed', { error: e });
       addToast({ type: 'error', message: translateError(e) });
     } finally {
       setLoadingImages(prev => prev.filter(id => id !== post.id));
@@ -344,7 +352,7 @@ const ContentGenerator: React.FC = () => {
       }
       addToast({ type: 'success', message: 'Arquivos salvos no Google Drive!' });
     } catch (e: any) {
-      console.error(e);
+      logger.error('handleSaveToDrive failed', { error: e });
       addToast({ type: 'error', message: `Erro ao salvar: ${translateError(e)}` });
     }
   };
@@ -367,7 +375,7 @@ const ContentGenerator: React.FC = () => {
       await saveLibraryItem(item);
       addToast({ type: 'success', message: 'Prompt salvo na Biblioteca!' });
     } catch (error) {
-      console.error(error);
+      logger.error('handleSavePrompt failed', { error });
       addToast({ type: 'error', message: translateError(error) });
     }
   };
@@ -381,7 +389,7 @@ const ContentGenerator: React.FC = () => {
       Gere 4 personas (compradores ideais) no tema "${avatarTheme}".
       Retorne em JSON um array de objetos com: id, name, age, occupation, interests, painPoints, buyingBehavior.`;
 
-      const response = await generateText(avatarPrompt, { model: GEMINI_PRO_MODEL, responseMimeType: 'application/json' });
+      const response = await routedGenerateText('chat', avatarPrompt, { model: GEMINI_PRO_MODEL, responseMimeType: 'application/json' });
       const cleanResponse = response.replace(/```json/g, '').replace(/```/g, '').trim();
       const generatedAvatars: Avatar[] = JSON.parse(cleanResponse);
 
@@ -404,7 +412,7 @@ const ContentGenerator: React.FC = () => {
       await Promise.all(savePromises);
       addToast({ type: 'success', message: `4 Avatares salvos na biblioteca com o tema ${avatarTheme}!` });
     } catch (e) {
-      console.error(e);
+      logger.error('generateAvatars failed', { error: e });
       addToast({ type: 'error', message: translateError(e) });
     } finally {
       setLoadingAvatars(false);
@@ -415,9 +423,12 @@ const ContentGenerator: React.FC = () => {
     if (!profileAnalysisText.trim()) return;
     setLoadingProfileAnalysis(true);
     try {
-      const res = await generateText(`Analise o perfil deste texto: "${profileAnalysisText}". Retorne demografia, interesses, dores.`, { model: GEMINI_PRO_MODEL });
+      const res = await routedGenerateText('market_radar', `Analise o perfil deste texto: "${profileAnalysisText}". Retorne demografia, interesses, dores.`, { model: GEMINI_PRO_MODEL });
       setProfileAnalysisResult(res);
-    } catch (e) { addToast({ type: 'error', message: translateError(e) }); } finally { setLoadingProfileAnalysis(false); }
+    } catch (e) { 
+      logger.error('analyzeProfile failed', { error: e });
+      addToast({ type: 'error', message: translateError(e) }); 
+    } finally { setLoadingProfileAnalysis(false); }
   }, [profileAnalysisText, addToast]);
 
   const handleDownloadAvatarsTxt = useCallback(() => {
@@ -469,7 +480,7 @@ const ContentGenerator: React.FC = () => {
       URL.revokeObjectURL(blobUrl);
       addToast({ type: 'success', message: 'Download concluído!' });
     } catch (e) {
-      console.error(e);
+      logger.error('handleDownloadImage failed', { error: e });
       addToast({ type: 'error', message: translateError(e) });
     }
   };
@@ -515,7 +526,7 @@ const ContentGenerator: React.FC = () => {
       setPinterestBoards(boards);
       if (boards.length > 0) setSelectedBoardId(boards[0].id);
     } catch (e) {
-      console.error(e);
+      logger.error('fetchPinterestBoards failed', { error: e });
       addToast({ type: 'error', message: 'Falha ao buscar pastas do Pinterest.' });
     } finally {
       setPinterestLoading(false);
@@ -544,7 +555,7 @@ const ContentGenerator: React.FC = () => {
       addToast({ type: 'success', message: 'Pin criado com sucesso!' });
       setShowPinterestModal(false);
     } catch (e: any) {
-      console.error(e);
+      logger.error('handlePinterestPublish failed', { error: e });
       addToast({ type: 'error', message: `Erro ao criar Pin: ${translateError(e)}` });
     } finally {
       setPinterestLoading(false);
@@ -570,7 +581,7 @@ const ContentGenerator: React.FC = () => {
       addToast({ type: 'success', message: 'Publicado no Facebook com sucesso!' });
       setTimeout(() => setShowPublishModal(false), 2000);
     } catch (e: any) {
-      console.error(e);
+      logger.error('handleFacebookPublish failed', { error: e });
       const errorMsg = translateError(e);
       setPublishStatus("Erro na publicação.");
       addToast({ type: 'error', message: `Erro Facebook: ${errorMsg}` });
@@ -591,7 +602,7 @@ const ContentGenerator: React.FC = () => {
       addToast({ type: 'success', message: 'Publicado no Instagram com sucesso!' });
       setTimeout(() => setShowPublishModal(false), 2000);
     } catch (e: any) {
-      console.error(e);
+      logger.error('handleInstagramPublish failed', { error: e });
       const errorMsg = translateError(e);
       setPublishStatus("Erro na publicação Instagram.");
       addToast({ type: 'error', message: `Erro Instagram: ${errorMsg}` });
@@ -755,6 +766,42 @@ const ContentGenerator: React.FC = () => {
             {
               generatedPosts.length > 0 && (
                 <div className="space-y-12">
+                  <div className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+                    <div className="flex flex-col">
+                      <h4 className="text-white font-bold">Posts Gerados</h4>
+                      <p className="text-xs text-gray-400">{generatedPosts.length} sugestões baseadas na sua ideia</p>
+                    </div>
+                    <Button 
+                      onClick={async () => {
+                        addToast({ type: 'info', message: 'Salvando posts no workspace...' });
+                        try {
+                          for (const post of generatedPosts) {
+                            await saveContent({
+                              title: post.title,
+                              content: post.content_text,
+                              user_id: userId,
+                              metadata: {
+                                platform: 'instagram', // default
+                                format: 'post',
+                                ai_generated: true,
+                                ai_model: 'gemini-flash',
+                                prompt: prompt
+                              },
+                              tags: post.hashtags || [],
+                              status: 'draft'
+                            }, 'contents');
+                          }
+                          addToast({ type: 'success', message: 'Todos os posts salvos no Workspace!' });
+                        } catch (e) {
+                          logger.error("Failed to save all posts", { error: e });
+                        }
+                      }}
+                      variant="liquid"
+                      className="text-xs h-10"
+                    >
+                      Salvar Tudo no Workspace
+                    </Button>
+                  </div>
                   {generatedPosts.map((post, index) => (
                     <GeneratedPostCard
                       key={post.id}

@@ -1,24 +1,15 @@
 import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../lib/supabase';
-
-export interface Content {
-    id?: string;
-    title: string;
-    content: string;
-    user_id?: string;
-    type?: string;
-    platform?: string;
-    metadata?: Record<string, any>;
-    tags?: string[];
-}
+import { CreateContentInput, UpdateContentInput, StrongContent } from '../types/content.types';
+import { logger } from '../lib/logger';
 
 export const useContentSave = () => {
     const { addToast } = useToast();
 
-    const saveContent = async (content: Content) => {
+    const saveContent = async (content: any, tableName: string = 'contents') => {
         try {
             const { data, error } = await supabase
-                .from('contents')
+                .from(tableName)
                 .insert(content)
                 .select()
                 .single();
@@ -26,7 +17,7 @@ export const useContentSave = () => {
             if (error) {
                 addToast({
                     type: 'error',
-                    message: `Erro ao salvar: ${error.message}`
+                    message: `Erro ao salvar em ${tableName}: ${error.message}`
                 });
                 throw error;
             }
@@ -38,15 +29,15 @@ export const useContentSave = () => {
 
             return data;
         } catch (error) {
-            console.error('Error saving content:', error);
+            logger.error(`Error saving content to ${tableName}:`, { error });
             throw error;
         }
     };
 
-    const updateContent = async (id: string, updates: Partial<Content>) => {
+    const updateContent = async (id: string, updates: any, tableName: string = 'contents') => {
         try {
             const { data, error } = await supabase
-                .from('contents')
+                .from(tableName)
                 .update(updates)
                 .eq('id', id)
                 .select()
@@ -55,7 +46,7 @@ export const useContentSave = () => {
             if (error) {
                 addToast({
                     type: 'error',
-                    message: `Erro ao atualizar: ${error.message}`
+                    message: `Erro ao atualizar em ${tableName}: ${error.message}`
                 });
                 throw error;
             }
@@ -67,22 +58,22 @@ export const useContentSave = () => {
 
             return data;
         } catch (error) {
-            console.error('Error updating content:', error);
+            logger.error(`Error updating content in ${tableName}:`, { error });
             throw error;
         }
     };
 
-    const deleteContent = async (id: string) => {
+    const deleteContent = async (id: string, tableName: string = 'contents') => {
         try {
             const { error } = await supabase
-                .from('contents')
+                .from(tableName)
                 .delete()
                 .eq('id', id);
 
             if (error) {
                 addToast({
                     type: 'error',
-                    message: `Erro ao deletar: ${error.message}`
+                    message: `Erro ao deletar de ${tableName}: ${error.message}`
                 });
                 throw error;
             }
@@ -92,7 +83,7 @@ export const useContentSave = () => {
                 message: 'Conteúdo deletado!'
             });
         } catch (error) {
-            console.error('Error deleting content:', error);
+            logger.error(`Error deleting content from ${tableName}:`, { error });
             throw error;
         }
     };

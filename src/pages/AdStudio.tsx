@@ -6,15 +6,16 @@ import Button from '../components/ui/Button';
 import SaveToLibraryButton from '../components/features/SaveToLibraryButton';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import VoiceoverControl from '../components/features/VoiceoverControl';
-import MediaActionsToolbar from '../components/features/MediaActionsToolbar'; // NOVO
-import { generateText, generateImage } from '../services/ai';
-import { saveAd } from '../services/core/db';
-import { Ad } from '../types';
-import { GEMINI_PRO_MODEL, IMAGEN_ULTRA_MODEL, PLACEHOLDER_IMAGE_BASE64 } from '../constants';
-import { useToast } from '../contexts/ToastContext';
+import MediaActionsToolbar from '../components/features/MediaActionsToolbar';
 import { uploadFile } from '../services/media/storage';
 import { useAuth } from '../contexts/AuthContext';
+import { routedGenerateText, generateImage } from '../services/ai';
+import { logger } from '../lib/logger';
+import { useContentSave } from '../hooks/useContentSave';
 import { hostingerApi } from '../services/integrations/hostinger';
+import { useToast } from '../contexts/ToastContext';
+import { Ad } from '../types';
+import { GEMINI_PRO_MODEL, IMAGEN_ULTRA_MODEL, PLACEHOLDER_IMAGE_BASE64 } from '../constants';
 import {
   ChartBarIcon,
   SparklesIcon,
@@ -50,6 +51,7 @@ const AdStudio: React.FC = () => {
 
   const { addToast } = useToast();
   const { user } = useAuth();
+  const { saveContent } = useContentSave();
   const userId = user?.id || 'guest-user';
 
   const handleGenerateAd = useCallback(async () => {
@@ -71,7 +73,7 @@ const AdStudio: React.FC = () => {
       Provide a headline, ad copy, and a visual description for an image/video creative.
       Return the output as a JSON object with 'headline', 'copy', and 'visual_description' keys.`;
 
-      const textResponse = await generateText(adPrompt, {
+      const textResponse = await routedGenerateText('ad_studio', adPrompt, {
         model: GEMINI_PRO_MODEL,
         responseMimeType: 'application/json',
         responseSchema: {
@@ -93,7 +95,7 @@ const AdStudio: React.FC = () => {
           adPrompt,
           JSON.stringify(adData),
           'ad_generator'
-        ).catch(e => console.error('Background memory save failed:', e));
+        ).catch(e => logger.error('Background memory save failed:', { error: e }));
       }
 
       const newAd: Ad = {
@@ -117,7 +119,7 @@ const AdStudio: React.FC = () => {
       if (imageResponse.type === 'image') {
         finalImageUrl = imageResponse.imageUrl;
       } else if (imageResponse.type === 'error') {
-        console.error("Ad image generation error:", imageResponse.message);
+        logger.error("Ad image generation error:", { message: imageResponse.message });
       }
 
       // Upload if Base64 and User Logged In
@@ -129,7 +131,7 @@ const AdStudio: React.FC = () => {
           const uploadedItem = await uploadFile(file, user.id, 'image');
           finalImageUrl = uploadedItem.file_url;
         } catch (uploadErr) {
-          console.error("Failed to upload ad creative:", uploadErr);
+          logger.error("Failed to upload ad creative:", { error: uploadErr });
         }
       }
 
@@ -139,7 +141,7 @@ const AdStudio: React.FC = () => {
       addToast({ type: 'success', title: 'Anúncio Criado', message: 'Anúncio gerado com sucesso.' });
 
     } catch (err) {
-      console.error('Error generating ad:', err);
+      logger.error('Error generating ad:', { error: err });
       addToast({ type: 'error', title: 'Erro', message: `Falha ao gerar anúncio: ${err instanceof Error ? err.message : String(err)}` });
     } finally {
       setLoading(false);
@@ -153,19 +155,18 @@ const AdStudio: React.FC = () => {
     }
     setLoading(true); // Re-use loading state for saving
     try {
-      const savedAd = await saveAd(generatedAd); // Save to Supabase (or LocalStorage fallback)
+      const savedAd = await saveContent(generatedAd, 'ads'); 
       addToast({
         type: 'success',
         title: 'Salvo',
         message: `Anúncio para "${savedAd.platform}" salvo com sucesso!`
       });
     } catch (err) {
-      console.error('Error saving ad:', err);
-      addToast({ type: 'error', title: 'Erro ao Salvar', message: 'Falha ao salvar o anúncio.' });
+      // Error already handled and logged by the hook
     } finally {
       setLoading(false);
     }
-  }, [generatedAd, addToast]);
+  }, [generatedAd, addToast, saveContent]);
 
   const handleAnalyzeAd = useCallback(async () => {
     if (!adToAnalyze.trim()) {
@@ -189,18 +190,18 @@ Forneça:
 
 Responda em Markdown estruturado.`;
 
-      const response = await generateText(prompt, { model: GEMINI_PRO_MODEL });
+      const response = await routedGenerateText('ad_studio', prompt, { model: GEMINI_PRO_MODEL });
 
       // Antigravit: Save Memory
       if (user) {
         hostingerApi.saveMemory(prompt, response, 'ad_analysis')
-          .catch(e => console.error('Background memory save failed:', e));
+          .catch(e => logger.error('Background memory save failed:', { error: e }));
       }
 
       setAnalysisResult(response);
       addToast({ type: 'success', message: 'Análise concluída!' });
     } catch (err) {
-      console.error(err);
+      logger.error('handleAnalyzeAd failed', { error: err });
       addToast({ type: 'error', message: 'Falha na análise.' });
     } finally {
       setIsAnalyzing(false);
@@ -227,7 +228,7 @@ Texto: ${generatedAd.copy}
 
 Retorne no formato JSON: { "headline": "...", "copy": "..." }`;
 
-      const response = await generateText(prompt, {
+      const response = await routedGenerateText('ad_studio', prompt, {
         model: GEMINI_PRO_MODEL,
         responseMimeType: 'application/json'
       });
@@ -242,7 +243,7 @@ Retorne no formato JSON: { "headline": "...", "copy": "..." }`;
 
       addToast({ type: 'success', message: `Anúncio reescrito: Modo ${mode}` });
     } catch (err) {
-      console.error(err);
+      logger.error('handleRewriteAd failed', { error: err });
       addToast({ type: 'error', message: 'Falha ao reescrever.' });
     } finally {
       setLoading(false);

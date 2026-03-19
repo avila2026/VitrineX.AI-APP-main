@@ -1,6 +1,7 @@
 import { generateText } from '../ai/text';
 import { ChatMessage } from '../../types';
 import { GEMINI_FLASH_MODEL } from '../../constants';
+import { logger } from '../../lib/logger';
 
 // Interface for the Memory Object
 export interface ClientMemory {
@@ -66,7 +67,7 @@ export const compactChatHistory = async (history: ChatMessage[], existingMemory?
             rawContextTokenCount: conversationText.length / 4 // Approx estimation
         };
     } catch (error) {
-        console.error("Memory compaction failed", error);
+        logger.error("Memory compaction failed", { error });
         return existingMemory || { userId: '', lastUpdated: '', summary: '', keyFacts: [], rawContextTokenCount: 0 };
     }
 };

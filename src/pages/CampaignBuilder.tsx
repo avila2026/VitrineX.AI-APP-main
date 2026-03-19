@@ -4,13 +4,16 @@ import { useState, useCallback } from 'react';
 import Textarea from '../components/ui/Textarea';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { campaignBuilder, generateText } from '../services/ai';
+import { campaignBuilder, routedGenerateText, generateText } from '../services/ai';
 import { GEMINI_FLASH_MODEL } from '../constants';
 import { saveCampaign } from '../services/core/db';
 import { Campaign } from '../types';
 import { useNavigate } from '../hooks/useNavigate';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../lib/logger';
+import { useContentSave } from '../hooks/useContentSave';
+
 import {
   CurrencyDollarIcon,
   HashtagIcon,
@@ -52,6 +55,7 @@ const CampaignBuilder: React.FC = () => {
   const { navigateTo } = useNavigate();
   const { addToast } = useToast();
   const { user } = useAuth();
+  const { saveContent } = useContentSave();
   const userId = user?.id || 'anonymous';
 
   const calculateROI = useCallback(() => {
@@ -81,7 +85,7 @@ CTA Sugerido: ${data.cta || 'Saiba Mais'}`;
         // Clean up
         localStorage.removeItem('vitrinex_pending_campaign_context');
       } catch (e) {
-        console.error('Failed to parse campaign context', e);
+        logger.error('Failed to parse campaign context', { error: e });
       }
     }
   }, [addToast]);
@@ -116,28 +120,20 @@ CTA Sugerido: ${data.cta || 'Saiba Mais'}`;
     setExecutionTips(null); // Reset tips when creating new campaign
 
     try {
-      // Parallel execution: Build Campaign AND Gen Tips (Optional: could serve tips separately)
-      // For now, let's keep them separate user actions or trigger together?
-      // User asked for "dicas e indicações" separate from general build? Or integrated?
-      // The request implies "descreva dicas... de como fazer a campanha".
-      // Let's trigger both or just campaign first. Let's stick to campaign first, then tips button.
-
       const { campaign } = await campaignBuilder(campaignPrompt, userId);
 
-      // Save to Database
-      await saveCampaign(campaign);
+      // Save to Database using the new hook
+      await saveContent(campaign, 'campaigns');
 
       setGeneratedCampaign(campaign);
       addToast({ type: 'success', title: 'Sucesso!', message: `Campanha "${campaign.name}" criada e salva com sucesso!` });
     } catch (err) {
-      console.error('Error building campaign:', err);
-      const errorMessage = `Falha ao criar campanha: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMessage);
-      addToast({ type: 'error', title: 'Erro na Criação', message: errorMessage });
+      // Error handled by hook
+      setError(`Falha ao criar campanha: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
     }
-  }, [campaignPrompt, addToast, userId]);
+  }, [campaignPrompt, addToast, userId, saveContent]);
 
   const handleGenerateTips = useCallback(async () => {
     if (!campaignPrompt.trim()) {
@@ -161,7 +157,7 @@ CTA Sugerido: ${data.cta || 'Saiba Mais'}`;
     Use tom profissional e direto. Dê dicas acionáveis.`;
 
     try {
-      const response = await generateText(prompt, {
+      const response = await routedGenerateText('campaign_builder', prompt, {
         model: GEMINI_FLASH_MODEL,
         responseMimeType: 'application/json'
       });
@@ -171,7 +167,7 @@ CTA Sugerido: ${data.cta || 'Saiba Mais'}`;
       setExecutionTips(tips);
       addToast({ type: 'success', message: 'Dicas de execução geradas!' });
     } catch (e) {
-      console.error("Failed to generate tips", e);
+      logger.error("Failed to generate tips", { error: e });
       addToast({ type: 'error', message: 'Erro ao gerar dicas.' });
     } finally {
       setTipsLoading(false);
