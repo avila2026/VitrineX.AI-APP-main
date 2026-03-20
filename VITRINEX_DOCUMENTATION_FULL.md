@@ -24,7 +24,7 @@ Este documento serve como a "Memória Central" para agentes de IA, desenvolvedor
 ## 2. Arquitetura Técnica
 
 ### Frontend
-- **Framework:** React 18 (Vite)
+- **Framework:** React 19 (Vite)
 - **Linguagem:** TypeScript
 - **Estilização:** Tailwind CSS (com design tokens personalizados em `index.css`)
 - **Bibliotecas de UI:** Headless UI, Heroicons, Framer Motion (para animações complexas).

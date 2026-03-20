@@ -6,7 +6,7 @@
 ### **A Singularidade do Marketing Digital.**
 Onde o **Design Líquido** encontra a **Inteligência Artificial Generativa**.
 
-![Version](https://img.shields.io/badge/v3.0-LIVE-0ea5e9?style=for-the-badge)
+![Version](https://img.shields.io/badge/v4.0.1-LIVE-0ea5e9?style=for-the-badge)
 ![Status](https://img.shields.io/badge/SYSTEM-OPERATIONAL-22c55e?style=for-the-badge)
 ![AI Core](https://img.shields.io/badge/CORE-MULTI_AI_ENGINE-purple?style=for-the-badge)
 ![Models](https://img.shields.io/badge/MODELS-GEMINI_|_MISTRAL_|_OLLAMA-blue?style=for-the-badge)

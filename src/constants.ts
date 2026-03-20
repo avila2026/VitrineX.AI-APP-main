@@ -1,15 +1,15 @@
 // Nomes dos Modelos Gemini - Modelos Oficiais da API Google Gemini
-export const GEMINI_FLASH_MODEL = 'gemini-3-flash-preview';
-export const GEMINI_PRO_MODEL = 'gemini-3.1-pro-preview';
+export const GEMINI_FLASH_MODEL = 'gemini-2.5-flash';
+export const GEMINI_PRO_MODEL = 'gemini-2.5-pro';
 
 // Modelos de Geração de Imagem
 export const IMAGEN_STANDARD_MODEL = 'imagen'; // Imagen 4
 export const IMAGEN_ULTRA_MODEL = 'imagen'; 
-export const IMAGEN_FAST_MODEL = 'gemini-3.1-flash-image-preview'; // Nano Banana 2
-export const GEMINI_IMAGE_MODEL = 'gemini-3-pro-image-preview'; // Nano Banana Pro
+export const IMAGEN_FAST_MODEL = 'gemini-2.5-flash-image'; // Nano Banana 2
+export const GEMINI_IMAGE_MODEL = 'gemini-2.5-pro-image'; // Nano Banana Pro
 
 // Modelos de Geração de Vídeo
-export const VEO_GENERATE_MODEL = 'veo-3.1-generate-preview';
+export const VEO_GENERATE_MODEL = 'veo-2.0-generate-preview';
 
 // Modelos de Áudio
 export const GEMINI_LIVE_AUDIO_MODEL = 'gemini-2.5-flash-native-audio-preview-12-2025';
@@ -18,7 +18,7 @@ export const GEMINI_TTS_PRO_MODEL = 'gemini-2.5-pro-preview-tts';
 export const GEMINI_TTS_MODEL = GEMINI_TTS_FLASH_MODEL;
 
 // Modelo de Pensamento (Thinking)
-export const GEMINI_THINKING_MODEL = 'gemini-3.1-pro-preview';
+export const GEMINI_THINKING_MODEL = 'gemini-2.5-pro';
 
 // Padrões de Configuração
 export const DEFAULT_THINKING_LEVEL = 'high';

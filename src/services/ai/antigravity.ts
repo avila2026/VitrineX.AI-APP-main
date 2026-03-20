@@ -1,5 +1,7 @@
 import { GEMINI_FLASH_MODEL, GEMINI_PRO_MODEL } from '../../constants';
 import { getGeminiClient } from './gemini';
+import { logger } from '../../lib/logger';
+
 
 export type AntigravityMode = 'scanOnly' | 'fixSafe';
 export type AntigravityLanguage = 'ts' | 'js' | 'python';
@@ -135,15 +137,15 @@ REGRAS TOTAIS:
                     verificationStatus = 'errors_found';
                     verificationDetails = secondPass.output;
                 }
-            } catch (vErr) {
-                console.warn("[Antigravit] Falha no segundo passe de verificação:", vErr);
+            } catch (vErr: any) {
+                logger.warn("[Antigravit] Falha no segundo passe de verificação:", { error: vErr.message || vErr });
             }
 
             const endTime = Date.now();
             const duration = endTime - startTime;
 
             // Audit Log (Regra 11)
-            console.info(`[Antigravit] ${mode} | ${language} | ${duration}ms | Verification: ${verificationStatus}`);
+            logger.info(`[Antigravit] ${mode} | ${language} | ${duration}ms | Verification: ${verificationStatus}`);
 
             return {
                 success: true,
@@ -175,9 +177,9 @@ REGRAS TOTAIS:
             };
         }
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error("[Antigravit] Erro Crítico:", errorMsg);
+        logger.error("[Antigravit] Erro Crítico:", { error: errorMsg });
         return {
             success: false,
             output: codigo,
@@ -201,7 +203,7 @@ function calcularSimilaridade(str1: string, str2: string): number {
 
 // Deprecated alias for backward compatibility
 export const executarVarreduraAntigravit = async (codigo: string): Promise<string> => {
-    console.warn("executarVarreduraAntigravit is deprecated.");
+    logger.warn("executarVarreduraAntigravit is deprecated.");
     const res = await sanitizarCodigoAntigravit(codigo, { mode: 'fixSafe', language: 'ts' });
     return res.output;
 };

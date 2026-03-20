@@ -4,11 +4,12 @@
  */
 import { supabase } from '../lib/supabase'; // Importação necessária para o contexto de autheticação
 import { translateText } from './ai/text';
+import { logger } from '../lib/logger';
 
 // === MÓDULO DE MEMÓRIA HÍBRIDA (Supabase + MySQL) ===
 
 export const Antigravit_Memorizar = async (promptUsuario: string, respostaIA: string, textoEditado: string | null = null) => {
-    console.log("⚡ Iniciando gravação de memória...");
+    logger.info("⚡ Iniciando gravação de memória...");
 
     // 1. Tenta pegar o ID do usuário logado no Supabase
     let usuarioID = 'visitante_anonimo';
@@ -18,11 +19,11 @@ export const Antigravit_Memorizar = async (promptUsuario: string, respostaIA: st
             const { data } = await supabase.auth.getUser();
             if (data && data.user) {
                 usuarioID = data.user.id; // Ex: "a12b3c..."
-                console.log("👤 Usuário identificado:", data.user.email);
+                logger.debug("👤 Usuário identificado:", { email: data.user.email });
             }
         }
-    } catch (e) {
-        console.warn("⚠️ Supabase não detectado ou usuário deslogado.");
+    } catch (e: any) {
+        logger.warn("⚠️ Supabase não detectado ou usuário deslogado.", { error: e.message || e });
     }
 
     // 2. Traduz os textos para o inglês
@@ -59,16 +60,16 @@ export const Antigravit_Memorizar = async (promptUsuario: string, respostaIA: st
         try {
             const resultado = await response.json();
             if (resultado.status === 'sucesso') {
-                console.log("✅ Memória consolidada no Servidor.");
+                logger.info("✅ Memória consolidada no Servidor.");
             } else {
-                console.warn("⚠️ Erro no servidor:", resultado.msg);
+                logger.warn("⚠️ Erro no servidor de memória:", { msg: resultado.msg });
             }
         } catch (jsonErr) {
             const text = await response.text();
-            console.warn("⚠️ Resposta não-JSON do servidor:", text);
+            logger.warn("⚠️ Resposta não-JSON do servidor de memória:", { text });
         }
 
-    } catch (erro) {
-        console.error("❌ Falha na conexão com Hostinger:", erro);
+    } catch (erro: any) {
+        logger.error("❌ Falha na conexão com Hostinger (Antigravit):", { error: erro.message || erro });
     }
 }

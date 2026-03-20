@@ -2,6 +2,8 @@ import { GoogleGenAI } from '@google/genai';
 import { GEMINI_FLASH_MODEL, HARDCODED_API_KEY } from '../../constants';
 import { SecureStorage } from '../../lib/secureStorage';
 import { getUserProfile } from '../core/db';
+import { logger } from '../../lib/logger';
+
 
 export const getApiKey = async (userId?: string): Promise<string> => {
   // 1. LocalStorage (Raw - Legacy/Fast cache)
@@ -15,8 +17,8 @@ export const getApiKey = async (userId?: string): Promise<string> => {
       localStorage.setItem('vitrinex_gemini_api_key', secureKey);
       return secureKey;
     }
-  } catch (e) {
-    console.warn('SecureStorage retrieval failed', e);
+  } catch (e: any) {
+    logger.warn('SecureStorage retrieval failed', { error: e.message || e });
   }
 
   // 3. Supabase Profile (Source of Truth for persistent users)
@@ -28,8 +30,8 @@ export const getApiKey = async (userId?: string): Promise<string> => {
         await SecureStorage.setItem('vitrinex_gemini_api_key_secure', profile.apiKey);
         return profile.apiKey;
       }
-    } catch (e) {
-      console.warn('Supabase key retrieval failed', e);
+    } catch (e: any) {
+      logger.warn('Supabase key retrieval failed', { error: e.message || e });
     }
   }
 
@@ -52,7 +54,7 @@ export const getGeminiClient = async (explicitKey?: string, userId?: string): Pr
     } catch (e: any) {
       const msg = e.message?.toLowerCase() || '';
       if (msg.includes('404') || msg.includes('not found') || msg.includes('invalid model')) {
-        console.warn(`[Fallback] Modelo ${params.model} indisponível. Redirecionando para gemini-2.5-flash...`);
+        logger.warn(`[Fallback] Modelo ${params.model} indisponível. Redirecionando para gemini-2.5-flash...`);
         return await originalGenerateContent({ ...params, model: 'gemini-2.5-flash' });
       }
       throw e;
@@ -66,7 +68,7 @@ export const getGeminiClient = async (explicitKey?: string, userId?: string): Pr
     } catch (e: any) {
       const msg = e.message?.toLowerCase() || '';
       if (msg.includes('404') || msg.includes('not found') || msg.includes('invalid model')) {
-        console.warn(`[Fallback] Modelo Stream ${params.model} indisponível. Redirecionando para gemini-2.5-flash...`);
+        logger.warn(`[Fallback] Modelo Stream ${params.model} indisponível. Redirecionando para gemini-2.5-flash...`);
         return await originalGenerateContentStream({ ...params, model: 'gemini-2.5-flash' });
       }
       throw e;
@@ -95,7 +97,7 @@ export const testGeminiConnection = async (explicitKey?: string, userId?: string
   } catch (error) {
     const err = error as Error;
     const errorMessage = err.message || err.toString();
-    console.error("Erro detalhado:", errorMessage);
+    logger.error("Erro detalhado:", { error: errorMessage });
     throw new Error(`Falha na conexão Gemini 2.5: ${errorMessage}`);
   }
 };

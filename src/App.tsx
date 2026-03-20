@@ -22,6 +22,8 @@ import Sidebar from './components/layout/Sidebar';
 import Navbar from './components/layout/Navbar';
 import BottomNav from './components/layout/BottomNav';
 import MobileNavMenu from './components/layout/MobileNavMenu';
+import { logger } from './lib/logger';
+
 
 // Pages (Lazy Load)
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -50,12 +52,12 @@ import AnimatedBackground from './components/ui/animated-shader-background';
 import OnboardingOverlay from './components/features/OnboardingOverlay';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import GlobalFilters from './components/ui/GlobalFilters'; // Optimization
-import OllamaDOMInspector from './components/features/OllamaDOMInspector';
+import FloatingChat from './components/features/FloatingChat';
 
 // Module Type Definition
 export const MODULE_NAMES = [
     'Dashboard',
-    // 'ChatVitrineX',
+    'ChatVitrineX',
     'ContentGenerator',
     'TrendHunter',
     'SmartScheduler',
@@ -68,9 +70,6 @@ export const MODULE_NAMES = [
     'Indications',
     'AnimationShowcase',
     'LandingPage',
-    // 'CosmicStudio',
-    // 'CosmicEditor',
-    // 'CosmicCarousel',
     'Admin'
 ] as const;
 
@@ -155,7 +154,7 @@ const AppContent: React.FC = () => {
 
     // Navigation Handler
     const setActiveModule = (module: ModuleName, params?: Record<string, unknown>) => {
-        console.log(`[Navigation] Navigating to: ${module}`, params ? 'with params' : '');
+        logger.debug(`[Navigation] Navigating to: ${module}`, { params });
         setActiveModuleState(module);
         setNavigationParams(params || null);
 
@@ -166,17 +165,16 @@ const AppContent: React.FC = () => {
 
     // Debugging current state
     useEffect(() => {
-        console.log(`[App] Current Active Module: ${activeModule}`);
+        logger.debug(`[App] Current Active Module: ${activeModule}`);
     }, [activeModule]);
 
     // Render Module Dictionary
     const renderModule = () => {
         const modules: Record<ModuleName, React.ReactNode> = {
             Dashboard: <Dashboard />,
-            // ChatVitrineX: <ChatVitrineX />,
+            ChatVitrineX: <ChatVitrineX />,
             ContentGenerator: <ContentGenerator />,
             TrendHunter: <TrendHunter />,
-
             SmartScheduler: <SmartScheduler />,
             ContentLibrary: <ContentLibrary />,
             AdStudio: <AdStudio />,
@@ -187,11 +185,7 @@ const AppContent: React.FC = () => {
             Indications: <IndicationsPage />,
             AnimationShowcase: <AnimationShowcase />,
             LandingPage: <LandingPage />,
-            // CosmicStudio: <CosmicStudio />,
-            // CosmicEditor: <CosmicStudio initialView="editor" />,
-            // CosmicCarousel: <CosmicStudio initialView="carousel" />,
-            Admin: <AdminGate />
-
+            Admin: <AdminGate />,
         };
 
         return modules[activeModule] ?? <Dashboard />;
@@ -293,7 +287,7 @@ const AppContent: React.FC = () => {
 
                     {/* Toast & Overlays */}
                     <OnboardingOverlay />
-                    <OllamaDOMInspector />
+                    <FloatingChat />
 
                 </div>
             )}

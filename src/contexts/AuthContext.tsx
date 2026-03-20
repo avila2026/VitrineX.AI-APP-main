@@ -3,6 +3,8 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { UserProfile, Role } from '../types';
 import { getUserProfile } from '../services/core/db';
+import { logger } from '../lib/logger';
+
 
 interface AuthContextType {
     user: User | null;
@@ -61,9 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setLoading(false);
                     }
                 }
-            } catch (err) {
+            } catch (err: any) {
                 // Silently handle offline mode but log for dev
-                console.error('Auth initialization error:', err);
+                logger.error('Auth initialization error:', { error: err.message || err });
                 if (mounted) setLoading(false);
             }
         };
@@ -106,8 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             setProfile(userProfile);
-        } catch (error) {
-            console.error('Error loading user profile:', error);
+        } catch (error: any) {
+            logger.error('Error loading user profile:', { error: error.message || error });
             // Fallback for mock/dev if DB fails
             if (email === 'jeancarlosmedvet97@outlook.com') {
                 setProfile({
@@ -134,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const signIn = async (email: string, password: string) => {
         if (!isSupabaseConfigured) {
             // Mock Login for development/demo
-            console.log('Mode: Mock Login');
+            logger.info('Mode: Mock Login');
 
             const isAdmin = email.toLowerCase() === 'jeancarlosmedvet97@outlook.com';
 
@@ -185,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
         if (!isSupabaseConfigured) {
             // Mock Signup
-            console.log('Mode: Mock Signup');
+            logger.info('Mode: Mock Signup');
 
             const isAdmin = email.toLowerCase() === 'jeancarlosmedvet97@outlook.com';
 

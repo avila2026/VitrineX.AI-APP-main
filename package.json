@@ -1,7 +1,7 @@
 {
   "name": "vitrinex-ai-app",
   "private": true,
-  "version": "1.0.0",
+  "version": "4.0.1",
   "scripts": {
     "dev": "vite",
     "dev:clean": "rd /s /q \"node_modules\\.vite\" 2>nul & vite",

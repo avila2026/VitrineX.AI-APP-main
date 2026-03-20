@@ -11,6 +11,8 @@ import {
     CpuChipIcon,
     ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'; // Using Heroicons v2
+import { logger } from '../lib/logger';
+
 
 // Types
 interface Message {
@@ -138,7 +140,7 @@ const ChatVitrineX: React.FC = () => {
                 finalKey = finalKey.substring(7).trim();
             }
 
-            console.log(`[ChatVitrineX] Sending request to Agent ${AGENT_ID} via ${apiUrl}`);
+            logger.info(`[ChatVitrineX] Sending request to Agent ${AGENT_ID} via ${apiUrl}`);
 
             const response = await axios.post(
                 apiUrl,
@@ -168,7 +170,7 @@ const ChatVitrineX: React.FC = () => {
             setMessages(prev => [...prev, { role: 'model', text: botResponse }]);
 
         } catch (error: any) {
-            console.error('API Error:', error);
+            logger.error('API Error in ChatVitrineX:', { error: error.message || error });
             setMessages(prev => [...prev, {
                 role: 'model',
                 text: `❌ Erro de comunicação com a Inteligência Artificial. \nPor favor, tente novamente em instantes.`

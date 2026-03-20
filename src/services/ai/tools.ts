@@ -28,6 +28,20 @@ export const vitrinexTools: any[] = [
                     },
                     required: ['query'],
                 },
+            },
+            {
+                name: 'send_message',
+                description: 'Send a chat message',
+                parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                        message: {
+                            type: Type.STRING,
+                            description: 'The text of the chat message to send',
+                        },
+                    },
+                    required: ['message'],
+                },
             }
         ],
     },
@@ -50,6 +64,11 @@ export const executeTool = async (name: string, args: any, context?: any): Promi
             const { searchTrends } = await import('./text');
             const trends = await searchTrends(args.query);
             return trends;
+
+        case 'send_message':
+            console.log("Receiving chat message via send_message tool:", args.message);
+            // Implementação do envio local, ou retornar a mensagem para ser mostrada no UI
+            return { status: 'sent', message: args.message };
 
         default:
             throw new Error(`Ferramenta ${name} não implementada.`);

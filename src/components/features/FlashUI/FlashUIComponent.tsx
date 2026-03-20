@@ -9,6 +9,8 @@
 import { GoogleGenAI } from '@google/genai';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { getGeminiClient } from '../../../services/ai/gemini';
+import { GEMINI_FLASH_MODEL } from '../../../constants';
+import { logger } from '../../../lib/logger';
 import { useAuth } from '../../../contexts/AuthContext';
 
 import { Artifact, Session, ComponentVariation, LayoutOption } from './types';
@@ -83,7 +85,7 @@ export const FlashDesigner: React.FC = () => {
 
                 const ai = await getGeminiClient(undefined, user?.id);
                 const response = await ai.models.generateContent({
-                    model: 'gemini-3-flash-preview',
+                    model: GEMINI_FLASH_MODEL,
                     contents: 'Generate 20 creative, short, diverse UI component prompts (e.g. "bioluminescent task list") in Portuguese (Brazil). Return ONLY a raw JSON array of strings. IP SAFEGUARD: Avoid referencing specific famous artists, movies, or brands.',
                 });
 
@@ -96,8 +98,8 @@ export const FlashDesigner: React.FC = () => {
                         setPlaceholders(prev => [...prev, ...shuffled]);
                     }
                 }
-            } catch (e) {
-                console.warn("Silently failed to fetch dynamic placeholders", e);
+            } catch (e: any) {
+                logger.warn("Silently failed to fetch dynamic placeholders", { error: e.message || e });
             }
         };
         setTimeout(fetchDynamicPlaceholders, 1000);
@@ -179,7 +181,7 @@ Required JSON Output Format (stream ONE object per line):
         `.trim();
 
             const responseStream = await ai.models.generateContentStream({
-                model: 'gemini-3-flash-preview',
+                model: GEMINI_FLASH_MODEL,
                 contents: prompt,
                 config: { temperature: 1.2 }
             });
@@ -191,7 +193,7 @@ Required JSON Output Format (stream ONE object per line):
                 }
             }
         } catch (e: any) {
-            console.error("Error generating variations:", e);
+            logger.error("Error generating variations:", { error: e.message || e });
         } finally {
             setIsLoading(false);
         }
@@ -268,7 +270,7 @@ Return ONLY a raw JSON array of 3 *NEW*, creative names for these directions (e.
         `.trim();
 
             const styleResponse = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
+                model: GEMINI_FLASH_MODEL,
                 contents: stylePrompt
             });
 
@@ -281,7 +283,7 @@ Return ONLY a raw JSON array of 3 *NEW*, creative names for these directions (e.
                 try {
                     generatedStyles = JSON.parse(jsonMatch[0]);
                 } catch (e) {
-                    console.warn("Failed to parse styles, using fallbacks");
+                    logger.warn("Failed to parse styles, using fallbacks");
                 }
             }
 
@@ -324,7 +326,7 @@ Return ONLY RAW HTML. No markdown fences.
           `.trim();
 
                     const responseStream = await ai.models.generateContentStream({
-                        model: 'gemini-3-flash-preview',
+                        model: GEMINI_FLASH_MODEL,
                         contents: prompt,
                     });
 
@@ -360,7 +362,7 @@ Return ONLY RAW HTML. No markdown fences.
                     ));
 
                 } catch (e: any) {
-                    console.error('Error generating artifact:', e);
+                    logger.error('Error generating artifact:', { error: e.message || e });
                     setSessions(prev => prev.map(sess =>
                         sess.id === sessionId ? {
                             ...sess,
@@ -374,8 +376,8 @@ Return ONLY RAW HTML. No markdown fences.
 
             await Promise.all(placeholderArtifacts.map((art, i) => generateArtifact(art, generatedStyles[i])));
 
-        } catch (e) {
-            console.error("Fatal error in generation process", e);
+        } catch (e: any) {
+            logger.error("Fatal error in generation process", { error: e.message || e });
         } finally {
             setIsLoading(false);
             setTimeout(() => inputRef.current?.focus(), 100);

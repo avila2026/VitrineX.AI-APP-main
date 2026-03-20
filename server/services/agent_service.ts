@@ -36,9 +36,6 @@ async function callTessAI(messages: any[], tools = "no-tools", rootId?: number, 
     return response.data?.responses?.[0] || { output: "Error", root_id: null };
 }
 
-return response.data?.responses?.[0] || { output: "Error", root_id: null };
-}
-
 // 2. Google Drive Upload (Mock implementation for plan)
 async function saveToDrive(content: string, filename: string) {
     // Requires OAuth2 or Service Account setup

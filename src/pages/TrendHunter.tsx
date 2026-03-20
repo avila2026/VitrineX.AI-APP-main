@@ -12,7 +12,9 @@ import { saveLibraryItem } from '../services/core/db';
 import { LibraryItem } from '../types';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../lib/logger';
 import { useTutorial, TutorialStep } from '../contexts/TutorialContext';
+
 import Skeleton from '../components/ui/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchSerpApiTrends, formatTrendsDataForAI, fetchDailyTrends, DailyTrend, GoogleTrendsResult } from '../services/integrations/serpApi';
@@ -95,8 +97,8 @@ const TrendHunter = () => {
         if (profile?.businessProfile) {
           setUserProfile(profile.businessProfile);
         }
-      } catch (err) {
-        console.warn('Failed to load user profile:', err);
+      } catch (err: any) {
+        logger.warn('Failed to load user profile in TrendHunter:', { error: err.message || err });
       }
     };
     loadProfile();
@@ -175,8 +177,8 @@ const TrendHunter = () => {
         serpContext = formatTrendsDataForAI(data);
         addToast({ type: 'info', message: 'Dados em tempo real do Google Trends capturados!' });
       }
-    } catch (e) {
-      console.warn('SerpApi skipped', e);
+    } catch (e: any) {
+      logger.warn('SerpApi skipped in TrendHunter:', { error: e.message || e });
     }
 
     const currentDate = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -232,8 +234,8 @@ IMPORTANTE: Forneça insights práticos e prontos para uso. Retorne APENAS o JSO
       try {
         const { Antigravit_Memorizar } = await import('../services/antigravit');
         Antigravit_Memorizar(prompt, response, 'trend_hunter_analysis');
-      } catch (err) {
-        console.warn('Falha no protocolo de memória:', err);
+      } catch (err: any) {
+        logger.warn('Falha no protocolo de memória em TrendHunter:', { error: err.message || err });
       }
 
       // Parse JSON com Proteção Anti-Markdown e Conversa
@@ -255,8 +257,8 @@ IMPORTANTE: Forneça insights práticos e prontos para uso. Retorne APENAS o JSO
             throw new Error("Formato JSON não encontrado na resposta.");
           }
         }
-      } catch (parseError) {
-        console.error('Failed to parse JSON:', parseError, response);
+      } catch (parseError: any) {
+        logger.error('Failed to parse JSON in TrendHunter:', { error: parseError.message || parseError, response });
         // Fallback
         parsed = {
           score: 85,
@@ -430,9 +432,9 @@ IMPORTANTE: Forneça insights práticos e prontos para uso. Retorne APENAS o JSO
 
       addToast({ type: 'success', message: 'Landing Page gerada e salva!' });
       setShowConfigModal(false);
-    } catch (error) {
+    } catch (error: any) {
       addToast({ type: 'error', message: 'Erro ao gerar HTML' });
-      console.error(error);
+      logger.error('handleGenerateHTML in TrendHunter failed', { error: error.message || error });
     } finally {
       setGeneratingHtml(false);
     }
