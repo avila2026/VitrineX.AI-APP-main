@@ -2,6 +2,15 @@
 export const GEMINI_FLASH_MODEL = 'gemini-2.5-flash';
 export const GEMINI_PRO_MODEL = 'gemini-2.5-pro';
 
+// Mapeamento Gemini -> Ollama (modelos locais)
+export const OLLAMA_MODEL_MAP: Record<string, string> = {
+  [GEMINI_FLASH_MODEL]: 'mistral',
+  [GEMINI_PRO_MODEL]: 'llama2',
+  'gemini-2.5-flash-lite': 'neural-chat',
+};
+export const OLLAMA_DEFAULT_MODEL = 'mistral';
+export const OLLAMA_FALLBACK_MODEL = 'neural-chat';
+
 // Modelos de Geração de Imagem
 export const IMAGEN_STANDARD_MODEL = 'imagen'; // Imagen 4
 export const IMAGEN_ULTRA_MODEL = 'imagen'; 

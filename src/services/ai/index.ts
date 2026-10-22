@@ -10,3 +10,5 @@ export * from './ollama';
 export * from './ollamaDom';
 export * from './mistral';
 export * from './llmRouter';
+export * from './llmFactory';
+export * from './adapters/ILLMProvider';

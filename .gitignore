@@ -31,6 +31,7 @@ dist-ssr
 .env.*
 env.ps1
 !.env.example
+!.env.ollama
 !server/.env.example
 
 # Editor & OS
